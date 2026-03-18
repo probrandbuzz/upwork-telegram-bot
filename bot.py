@@ -3,33 +3,35 @@ import requests
 import json
 import os
 
-# Telegram bot credentials (set as GitHub Secrets)
+# Telegram credentials (GitHub Secrets)
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 
-# Keywords you want to track
+# Optimized high-intent keywords
 KEYWORDS = [
-    "calculator",
-    "shopify price calculator",
-    "photoshop",
-    "photo editing",
-    "logo design",
-    "label design",
-    "image editing"
+    "shopify custom calculator",
+    "roi tool developer",
+    "pricing calculator",
+    "quote estimator",
+    "web calculator",
+    "calculator js",
+    "javascript calculator",
+    "calculator"
 ]
 
-# Upwork RSS feeds
+# Matching RSS feeds
 RSS_FEEDS = [
-    "https://www.upwork.com/ab/feed/jobs/rss?q=shopify+price+calculator",
-    "https://www.upwork.com/ab/feed/jobs/rss?q=calculator",
-    "https://www.upwork.com/ab/feed/jobs/rss?q=photoshop",
-    "https://www.upwork.com/ab/feed/jobs/rss?q=photo+editing"
+    "https://www.upwork.com/ab/feed/jobs/rss?q=shopify+calculator",
+    "https://www.upwork.com/ab/feed/jobs/rss?q=roi+calculator",
+    "https://www.upwork.com/ab/feed/jobs/rss?q=pricing+calculator",
+    "https://www.upwork.com/ab/feed/jobs/rss?q=quote+estimator",
+    "https://www.upwork.com/ab/feed/jobs/rss?q=web+calculator",
+    "https://www.upwork.com/ab/feed/jobs/rss?q=javascript+calculator"
 ]
 
-# File to store jobs already sent
 SEEN_FILE = "seen_jobs.json"
 
-# Load previously seen jobs
+# Load previously sent jobs
 def load_seen():
     try:
         with open(SEEN_FILE) as f:
@@ -37,46 +39,63 @@ def load_seen():
     except:
         return set()
 
-# Save seen jobs
+# Save sent jobs
 def save_seen(seen):
     with open(SEEN_FILE, "w") as f:
         json.dump(list(seen), f)
 
-# Send message to Telegram
+# Send Telegram message
 def send(msg):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    requests.post(url, data={"chat_id": CHAT_ID, "text": msg})
+    requests.post(url, data={
+        "chat_id": CHAT_ID,
+        "text": msg
+    })
 
-# Check if job matches any keyword
+# Keyword matching
 def should_send(summary, title):
     content = (title + summary).lower()
-    return any(k.lower() in content for k in KEYWORDS)
+    return any(keyword in content for keyword in KEYWORDS)
 
 # Load seen jobs
 seen = load_seen()
 
-# Loop through RSS feeds
+# Parse feeds
 for rss in RSS_FEEDS:
     feed = feedparser.parse(rss)
+
     for job in feed.entries:
+
         if job.link in seen:
             continue
 
         if should_send(job.summary, job.title):
-            # Check payment verification
+
+            # Payment verification detection
             verified = "payment verified" in job.summary.lower()
             tag = "✅ Verified" if verified else "⚠️ Unverified"
 
-            message = f"""
-{tag} Upwork Job 🚀
+            # Smart tagging
+            content = (job.title + job.summary).lower()
+
+            if "shopify" in content:
+                category = "🛒 Shopify"
+            elif "roi" in content:
+                category = "📊 ROI Tool"
+            elif "javascript" in content or "js" in content:
+                category = "💻 JS Dev"
+            else:
+                category = "🧮 Calculator"
+
+            message = f"""{category} | {tag}
 
 Title: {job.title}
 
-Link: {job.link}
+{job.link}
 """
 
             send(message)
             seen.add(job.link)
 
-# Save updated seen jobs
+# Save updated jobs
 save_seen(seen)
