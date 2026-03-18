@@ -3,7 +3,7 @@ import requests
 import json
 import os
 
-# Telegram bot credentials from GitHub Secrets
+# Telegram bot credentials (set as GitHub Secrets)
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 
@@ -47,7 +47,7 @@ def send(msg):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     requests.post(url, data={"chat_id": CHAT_ID, "text": msg})
 
-# Check if job should be sent (keyword match only)
+# Check if job matches any keyword
 def should_send(summary, title):
     content = (title + summary).lower()
     return any(k.lower() in content for k in KEYWORDS)
@@ -63,7 +63,7 @@ for rss in RSS_FEEDS:
             continue
 
         if should_send(job.summary, job.title):
-            # Check payment verification status
+            # Check payment verification
             verified = "payment verified" in job.summary.lower()
             tag = "✅ Verified" if verified else "⚠️ Unverified"
 
@@ -72,7 +72,7 @@ for rss in RSS_FEEDS:
 
 Title: {job.title}
 
-{job.link}
+Link: {job.link}
 """
 
             send(message)
