@@ -80,3 +80,4 @@ Link: {job.link}
 
 # Save updated seen jobs
 save_seen(seen)
+send("✅ Telegram bot is working! This is a test message.")
